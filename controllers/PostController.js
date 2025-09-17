@@ -2,6 +2,8 @@ import PostModel from "../models/Post.js"
 
 
 export const create = async (req, res) => {
+	console.log('🚀 req.userId in create controller:', req.userId);
+
 	try {
 		const doc = new PostModel({
 			title: req.body.title,
@@ -9,27 +11,37 @@ export const create = async (req, res) => {
 			imageUrl: req.body.imageUrl,
 			tags: req.body.tags.split(','),
 			user: req.userId,
-		})
-		const post = await doc.save();
+		});
 
+		const post = await doc.save();
 		res.json(post);
 	} catch (err) {
-		console.log(err);
+		console.log('❌ Error creating post:', err);
+
+		// Обработка ошибки уникальности
+		if (err.code === 11000) {
+			return res.status(400).json({
+				message: 'Пост с таким текстом уже существует',
+			});
+		}
+
 		res.status(500).json({
-			message: 'Не удалось создать статью'
+			message: 'Не удалось создать статью',
 		});
 	}
 };
 
+
 // controllers/posts.js
 export const getLastTags = async (req, res) => {
 	try {
-		const posts = await PostModel.find().exec();
+		const posts = await PostModel.find().limit(5).exec();
 
 		// Собираем все теги
 		const allTags = posts
 			.map(post => post.tags)
-			.flat();
+			.flat()
+			.slice(0, 5);
 
 		// Считаем количество
 		const tagCountMap = allTags.reduce((acc, tag) => {
