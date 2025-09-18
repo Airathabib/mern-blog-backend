@@ -16,6 +16,10 @@ const CommentSchema = new mongoose.Schema({
 		ref: 'Post',
 		required: true,
 	},
+	commentsCount: {
+		type: Number,
+		default: 0,
+	},
 }, {
 	timestamps: true,
 });

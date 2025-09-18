@@ -99,27 +99,20 @@ export const getOne = async (req, res) => {
 	try {
 		const postId = req.params.id;
 
-		// Используем await для работы с промисами
-		const doc = await PostModel.findOneAndUpdate(
-			{ _id: postId },
+		const doc = await PostModel.findByIdAndUpdate(
+			postId,
 			{ $inc: { viewsCount: 1 } },
-			{ new: true, populate: 'user' },
-			{ returnDocument: 'after' } // или new: true для старых версий
-		);
+			{ new: true }
+		).populate('user', 'fullName avatarUrl'); // ← исправлено
 
 		if (!doc) {
-			return res.status(404).json({
-				message: 'Статья не найдена'
-			});
+			return res.status(404).json({ message: 'Пост не найден' });
 		}
 
 		res.json(doc);
-		populate('user')
 	} catch (err) {
-		console.error(err);
-		res.status(500).json({
-			message: 'Не удалось получить статью'
-		});
+		console.error('Ошибка в getOne:', err);
+		res.status(500).json({ message: 'Ошибка при получении поста' });
 	}
 };
 

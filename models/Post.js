@@ -25,7 +25,13 @@ const PostSchema = new mongoose.Schema({
 		select: false
 	},
 	imageUrl: String,
+
+	commentsCount: {
+		type: Number,
+		default: 0,
+	},
 },
+
 	{
 		timestamps: true,
 	},);
