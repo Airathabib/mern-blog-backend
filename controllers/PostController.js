@@ -1,5 +1,5 @@
 import PostModel from "../models/Post.js"
-
+import CommentModel from "../models/Comment.js";
 
 export const create = async (req, res) => {
 	console.log('🚀 req.userId in create controller:', req.userId);
@@ -106,36 +106,39 @@ export const getOne = async (req, res) => {
 	}
 };
 
-
+// удаление поста и комментов
 export const remove = async (req, res) => {
 	try {
 		const postId = req.params.id;
 
-		// Сохраняем результат удаления в переменную
-		const doc = await PostModel.findOneAndDelete({
-			_id: postId
-		});
+		// Удаляем комментарии — ИСПРАВЛЕНО: { post: postId }
+		const commentResult = await CommentModel.deleteMany({ post: postId });
+		console.log(`🗑️ Удалено ${commentResult.deletedCount} комментариев для поста ${postId}`);
 
-		// Проверяем, был ли документ найден и удален
-		if (!doc) {
+		// Удаляем пост
+		const postDoc = await PostModel.findOneAndDelete({ _id: postId });
+
+		if (!postDoc) {
 			return res.status(404).json({
-				message: 'Статья не найдена'
+				message: 'Статья не найдена',
 			});
 		}
 
+		// Возвращаем _id удалённого поста
 		res.json({
-			success: true,
-			message: 'Статья успешно удалена'
+			_id: postDoc._id,
+			message: 'Статья и все её комментарии успешно удалены',
 		});
-
 	} catch (err) {
-		console.error(err);
+		console.error('❌ Ошибка при удалении поста:', err);
 		res.status(500).json({
-			message: 'Произошла ошибка при удалении статьи'
+			message: 'Произошла ошибка при удалении статьи',
 		});
 	}
 };
 
+
+//редактирование поста
 export const update = async (req, res) => {
 	try {
 		const postId = req.params.id;
