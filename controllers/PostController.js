@@ -35,40 +35,20 @@ export const create = async (req, res) => {
 // controllers/posts.js
 export const getLastTags = async (req, res) => {
 	try {
-		const { sort = 'new' } = req.query; // ← получаем sort из query
+		const { sort = 'new' } = req.query; // ← добавили sort
 
-		// Определяем сортировку постов
-		const sortBy = sort === 'popular'
-			? { viewsCount: -1 }
-			: { createdAt: -1 };
+		const tags = await PostModel.aggregate([
+			{ $unwind: '$tags' },
+			{ $group: { _id: '$tags', count: { $sum: 1 } } },
+			{ $sort: sort === 'popular' ? { count: -1 } : { _id: -1 } }, // ← сортировка
+			{ $limit: 10 },
+			{ $project: { _id: 0, name: '$_id', count: 1 } },
+		]);
 
-		// Получаем последние 5 постов (с сортировкой)
-		const posts = await PostModel.find()
-			.sort(sortBy)
-			.limit(5)
-			.exec();
-
-		// Собираем все теги из постов
-		const allTags = posts
-			.map(post => post.tags)
-			.flat(); // ← убираем .sort(sortOption)
-
-		// Считаем количество каждого тега
-		const tagCountMap = allTags.reduce((acc, tag) => {
-			acc[tag] = (acc[tag] || 0) + 1;
-			return acc;
-		}, {});
-
-		// Преобразуем в массив объектов и сортируем по частоте (популярности)
-		const tagsWithCount = Object.entries(tagCountMap)
-			.map(([name, count]) => ({ name, count }))
-			.sort((a, b) => b.count - a.count) // ← сортируем по количеству
-			.slice(0, 10); // топ-10
-
-		res.json(tagsWithCount);
+		res.json(tags);
 	} catch (err) {
-		console.log(err);
-		res.status(500).json({ message: 'Не удалось получить теги' });
+		console.error(err);
+		res.status(500).json({ message: 'Ошибка при получении тегов' });
 	}
 };
 
