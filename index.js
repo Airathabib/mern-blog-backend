@@ -16,7 +16,7 @@ import cors from 'cors';
 
 import multer from 'multer';
 
-mongoose.connect("mongodb+srv://strannik026:qwerty1234@cluster0.eybimoa.mongodb.net/blog?retryWrites=true&w=majority&appName=Cluster0",)
+mongoose.connect(process.env.MONGODB_URI)
 	.then(() => {
 		console.log('DB ok!')
 	})
@@ -81,9 +81,9 @@ app.patch(
 	PostController.update);
 
 
+const PORT = process.env.PORT || 4444;
 
-
-app.listen(process.env.PORT || 4444, (err) => {
+app.listen(PORT, (err) => {
 	if (err) {
 		return console.log(err);
 	}
